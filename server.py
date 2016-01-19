@@ -26,9 +26,7 @@ import SocketServer
 
 # try: curl -v -X GET http://127.0.0.1:8080/
 import os
-
 class MyWebServer(SocketServer.BaseRequestHandler):
-    
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
@@ -39,27 +37,32 @@ class MyWebServer(SocketServer.BaseRequestHandler):
             http = http.splitlines()[0]
             self.get(path, http)
     def get(self,path,http):
-        #If an http/1.1 is received,perform the rest of the instructiond
+        #If an http/1.1 is received,perform the rest of the instructions
         if http == "HTTP/1.1":
             request_path = os.path.abspath(path)
-            flag = request_path.find(os.getcwd())
-            if flag > -1:
-                     if path[-1] == "/":
-                          path = path + "index.html"
-                     extension = path.split(".")[-1]
-                     try:
-                         f = open(path, 'r')
-                     except IOError:
-                          self.request.sendall("HTTP/1.1 404 Not Found\r\n\r\n" + "404 Error")
+            val = request_path.find(os.getcwd()) # Return a string representing the current working directory.
+            if val>-1:
+                try:
+                    #If / is given, redirect to index.html
+                    if path[-1] == "/":
+                        path = path + "index.html"
+                    extension = path.split(".")[-1]
+                    file = open(path, 'r')
                     #Construct the content before sending it back
-                     content = "HTTP/1.1 200 OK" + "\r\n" + "Content-Type: text/" + extension + "\r\n\r\n" + f.read()
-                     self.request.sendall(content)
-                #except IOError:
-                        #self.request.sendall("HTTP/1.1 404 Not Found\r\n\r\n" + "404 Error")
+                    content = "HTTP/1.1 200 OK" + "\r\n" + "Content-Type: text/" + extension + "\r\n\r\n" + file.read()
+                    self.request.sendall(content)
+                except IOError:
+                    try:
+                        f = open(path + "/index.html", 'r')
+                        newpath = path.split("www/")[1]
+                        #Construct the content before sending it back
+                        self.request.sendall("HTTP/1.1 301 Moved Permanently\r\n"+ newpath + "/\r\n" )
+                    except IOError:
+                        #Construct the 404 content 
+                        self.request.sendall("HTTP/1.1 404 Not Found\r\n\r\n" + "404 error")
             else:
                 #send back 404 error
-                self.request.sendall("HTTP/1.1 404 Not Found\r\n\r\n" + "404 Error")
-       
+                self.request.sendall("HTTP/1.1 404 Not Found\r\n\r\n" + "404 error")
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
