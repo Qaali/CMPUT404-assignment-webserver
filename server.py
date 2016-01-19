@@ -44,17 +44,18 @@ class MyWebServer(SocketServer.BaseRequestHandler):
             request_path = os.path.abspath(path)
             flag = request_path.find(os.getcwd())
             if flag > -1:
-                try:
-                    #If / is given, redirect to index.html
-                    if path[-1] == "/":
-                        path = path + "index.html"
-                    extension = path.split(".")[-1]
-                    f = open(path, 'r')
+                     if path[-1] == "/":
+                          path = path + "index.html"
+                     extension = path.split(".")[-1]
+                     try:
+                         f = open(path, 'r')
+                     except IOError:
+                          self.request.sendall("HTTP/1.1 404 Not Found\r\n\r\n" + "404 Error")
                     #Construct the content before sending it back
-                    content = "HTTP/1.1 200 OK" + "\r\n" + "Content-Type: text/" + extension + "\r\n\r\n" + f.read()
-                    self.request.sendall(content)
-                except IOError:
-                        self.request.sendall("HTTP/1.1 404 Not Found\r\n\r\n" + "404 Error")
+                     content = "HTTP/1.1 200 OK" + "\r\n" + "Content-Type: text/" + extension + "\r\n\r\n" + f.read()
+                     self.request.sendall(content)
+                #except IOError:
+                        #self.request.sendall("HTTP/1.1 404 Not Found\r\n\r\n" + "404 Error")
             else:
                 #send back 404 error
                 self.request.sendall("HTTP/1.1 404 Not Found\r\n\r\n" + "404 Error")
